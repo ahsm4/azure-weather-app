@@ -1,3 +1,6 @@
+const appInsights = require('applicationinsights');
+appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
+
 const express = require('express');
 require('dotenv').config();
 
