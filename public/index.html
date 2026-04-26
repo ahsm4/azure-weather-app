@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Weather App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.6;
+            margin-bottom: 32px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 50px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            backdrop-filter: blur(10px);
+        }
+
+        input::placeholder { color: rgba(255,255,255,0.5); }
+
+        button {
+            padding: 14px 24px;
+            border-radius: 50px;
+            border: none;
+            background: #e94560;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: #c73652; }
+
+        .weather-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 36px;
+            display: none;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .weather-card.visible { display: block; }
+
+        .city-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .weather-icon {
+            width: 100px;
+            height: 100px;
+            margin: 10px auto;
+        }
+
+        .temperature {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            text-transform: capitalize;
+            margin: 8px 0 24px;
+        }
+
+        .details {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+            margin-top: 10px;
+        }
+
+        .detail-item { font-size: 0.9rem; opacity: 0.8; }
+        .detail-item span { display: block; font-size: 1.1rem; font-weight: 600; opacity: 1; }
+
+        .error {
+            background: rgba(233, 69, 96, 0.2);
+            border: 1px solid rgba(233, 69, 96, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            display: none;
+        }
+
+        .error.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⛅ Weather App</h1>
+        <p class="subtitle">Hosted on Microsoft Azure</p>
+
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="Enter a city name..." />
+            <button onclick="getWeather()">Search</button>
+        </div>
+
+        <div class="error" id="errorBox">
+            <p id="errorMessage">City not found. Please try again.</p>
+        </div>
+
+        <div class="weather-card" id="weatherCard">
+            <p class="city-name" id="cityName"></p>
+            <img class="weather-icon" id="weatherIcon" src="" alt="weather icon" />
+            <p class="temperature" id="temperature"></p>
+            <p class="description" id="description"></p>
+            <div class="details">
+                <div class="detail-item">Feels Like<span id="feelsLike"></span></div>
+                <div class="detail-item">Humidity<span id="humidity"></span></div>
+                <div class="detail-item">Wind<span id="wind"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Allow pressing Enter to search
+        document.getElementById('cityInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') getWeather();
+        });
+
+        async function getWeather() {
+            const city = document.getElementById('cityInput').value.trim();
+            if (!city) return;
+
+            const weatherCard = document.getElementById('weatherCard');
+            const errorBox = document.getElementById('errorBox');
+
+            weatherCard.classList.remove('visible');
+            errorBox.classList.remove('visible');
+
+            try {
+                const response = await fetch(`/weather?city=${encodeURIComponent(city)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    document.getElementById('errorMessage').textContent = data.error;
+                    errorBox.classList.add('visible');
+                    return;
+                }
+
+                document.getElementById('cityName').textContent = `${data.city}, ${data.country}`;
+                document.getElementById('temperature').textContent = `${data.temperature}°C`;
+                document.getElementById('description').textContent = data.description;
+                document.getElementById('feelsLike').textContent = `${data.feels_like}°C`;
+                document.getElementById('humidity').textContent = `${data.humidity}%`;
+                document.getElementById('wind').textContent = `${data.wind_speed} m/s`;
+                document.getElementById('weatherIcon').src = `https://openweathermap.org/img/wn/${data.icon}@2x.png`;
+
+                weatherCard.classList.add('visible');
+
+            } catch (err) {
+                document.getElementById('errorMessage').textContent = 'Something went wrong. Please try again.';
+                errorBox.classList.add('visible');
+            }
+        }
+    </script>
+</body>
+</html>
