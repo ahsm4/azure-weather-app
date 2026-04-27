@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/ahsm4/azure-weather-app#readme",
   "dependencies": {
+    "@azure/identity": "^4.13.1",
+    "@azure/keyvault-secrets": "^4.11.1",
     "applicationinsights": "^3.14.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

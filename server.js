@@ -2,10 +2,35 @@ const appInsights = require('applicationinsights');
 appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
 
 const express = require('express');
+const { SecretClient } = require('@azure/keyvault-secrets');
+const { DefaultAzureCredential } = require('@azure/identity');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Key Vault setup
+const keyVaultUrl = process.env.KEY_VAULT_URL;
+let weatherApiKey = null;
+
+async function getApiKey() {
+    if (weatherApiKey) return weatherApiKey;
+    
+    try {
+        const credential = new DefaultAzureCredential();
+        const client = new SecretClient(keyVaultUrl, credential);
+        const secret = await client.getSecret('openweather-api-key');
+        weatherApiKey = secret.value;
+        console.log('Successfully retrieved API key from Key Vault');
+    } catch (error) {
+        console.error('Error retrieving from Key Vault:', error.message);
+        // Fallback to environment variable for local development
+        weatherApiKey = process.env.OPENWEATHER_API_KEY;
+        console.log('Falling back to environment variable');
+    }
+    
+    return weatherApiKey;
+}
 
 // Serve frontend files from the "public" folder
 app.use(express.static('public'));
@@ -19,7 +44,7 @@ app.get('/weather', async (req, res) => {
     }
 
     try {
-        const apiKey = process.env.OPENWEATHER_API_KEY;
+        const apiKey = await getApiKey();
         const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
         
         const response = await fetch(url);
